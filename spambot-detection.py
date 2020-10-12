@@ -5,7 +5,7 @@ DEEPAI_API_KEY = ''
 reddit = praw.Reddit("corvus", user_agent='Repost Bot Detector by Corvus')
 
 # Check against older posts that have a karma score of at least this value                  
-karma_threshold = 1000
+karma_threshold = 5000
 
 # Only check a post if the OP has a link karma score below this value
 user_score_threshold = 10000
@@ -56,7 +56,7 @@ def scan_sub(sub):
          
 while(True):
     try:
-        scan_sub("aww+pics+trashy+eyebleach")
+        scan_sub("aww+pics")
     except:
         print("Something borked, restart for now")
         time.sleep(60)
