@@ -5,7 +5,7 @@ DEEPAI_API_KEY = ''
 reddit = praw.Reddit("corvus", user_agent='Repost Bot Detector by Corvus')
 
 # Check against older posts that have a karma score of at least this value                  
-karma_threshold = 5000
+karma_threshold = 2000
 
 # Only check a post if the OP has a link karma score below this value
 user_score_threshold = 10000
@@ -34,7 +34,7 @@ def compare_images(post1, post2):
         return False
            
 def detect_repost(post):
-    ps_results = requests.get('https://api.pushshift.io/reddit/search/submission/?size=10&sort=desc&score=>' + str(karma_threshold) + '&q="' + post.title + '"&subreddit=' + post.subreddit.display_name)
+    ps_results = requests.get('https://api.pushshift.io/reddit/search/submission/?size=10&sort=asc&score=>' + str(karma_threshold) + '&q="' + post.title + '"&subreddit=' + post.subreddit.display_name)
     for r in json.loads(ps_results.text)['data']:
         if r['author'] != post.author.name:
             og_post = reddit.submission(id=r['id'])
