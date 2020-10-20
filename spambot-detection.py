@@ -48,7 +48,7 @@ def compare_images(post1, post2):
 def detect_repost(post):   
     print("Checking post " + post.id + "...")
     # PushShift sometimes fails to update post scores for < year old submissions and defaults to 1, so check these also
-    ps_results = requests.get('https://api.pushshift.io/reddit/search/submission/?size=10&sort=asc&score>=' + str(karma_threshold[post.subreddit.display_name]) + '&q="' + 
+    ps_results = requests.get('https://api.pushshift.io/reddit/search/submission/?size=10&sort=asc&score=>' + str(karma_threshold[post.subreddit.display_name]) + '&q="' + 
                               post.title + '"&subreddit=' + post.subreddit.display_name)
     ps_score_one = requests.get('https://api.pushshift.io/reddit/search/submission/?size=10&sort=desc&score=1&q="' + post.title + '"&subreddit=' + post.subreddit.display_name)
     
