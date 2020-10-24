@@ -1,4 +1,4 @@
-import praw, requests, json, time
+import praw, requests, json, time, string
 
 DEEPAI_API_KEY = ''
 
@@ -14,8 +14,8 @@ user_score_threshold = 10000
 similarity_threshold = 10
 
 # Comment template for reporting a positive hit
-comment = "This submission by %s is an exact-title, same image repost of the following high karma post:\n\nhttps://reddit.com%s\n\nPlease investigate this account, as it is \
-           likely they may be an account farmer or reposting spam bot."
+comment_str = "This submission by %s is an exact-title, same image repost of the following high karma post:\n\nhttps://reddit.com%s\n\nPlease investigate this account, as it is \
+               likely they may be an account farmer or reposting spam bot."
 
 # Retrieve the karma thresholds for each subreddit we're scanning
 def read_sub_info():
@@ -44,7 +44,18 @@ def compare_images(post1, post2):
         print(post1.permalink + "\n" + post2.permalink)
         print(r.json())
         return False
-           
+
+# Strip punctuation from titles, and set all upper-case letters to lower-case
+def strip_title(s):
+    return s.lower().translate(str.maketrans('', '', string.punctuation))
+    
+# Make a comment if one does not exist already (avoid duplicate posting)
+def make_comment(post, comment):
+    for c in post.comments:
+        if c.author.name == "SpambotWatch":
+            return None
+    post.reply(comment)
+    
 def detect_repost(post):   
     print("Checking post " + post.id + "...")
     # PushShift sometimes fails to update post scores for < year old submissions and defaults to 1, so check these also
@@ -53,7 +64,7 @@ def detect_repost(post):
     ps_score_one = requests.get('https://api.pushshift.io/reddit/search/submission/?size=10&sort=desc&score=1&q="' + post.title + '"&subreddit=' + post.subreddit.display_name)
     
     for r in (json.loads(ps_results.text)['data'] + json.loads(ps_score_one.text)['data']):
-        if r['author'] != post.author.name and r['title'].lower() == post.title.lower() and (r['score'] == 1 or r['score'] >= karma_threshold[post.subreddit.display_name]):
+        if r['author'] != post.author.name and strip_title(r['title']) == strip_title(post.title) and (r['score'] == 1 or r['score'] >= karma_threshold[post.subreddit.display_name]):
             og_post = reddit.submission(id=r['id'])
             if og_post.score >= karma_threshold[post.subreddit.display_name]:
                 # Check if exact link has been used before
@@ -70,7 +81,7 @@ def scan_sub(sub):
             result = detect_repost(p)
             if result is not None:
                 print("Exact repost with same title detected:\n" + p.permalink + "\n" + result.permalink + "\n")
-                p.reply(comment %(p.author, result.permalink))
+                make_comment(p, comment_str %(p.author, result.permalink))
   
 read_sub_info()  
 while(True):
@@ -80,4 +91,3 @@ while(True):
     except:
         print("Something borked, restart for now")
         time.sleep(60)
-
